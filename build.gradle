@@ -130,3 +130,7 @@ tasks.named('compileJava') {
 tasks.named('processResources') {
 	dependsOn tasks.named('copyRustLib')
 }
+
+tasks.named('sourcesJar') {
+	dependsOn tasks.named('copyRustLib')
+}
