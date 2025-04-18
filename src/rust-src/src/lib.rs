@@ -1,139 +1,115 @@
+#![allow(unused)]
 use std::collections::HashMap;
-
-// This is the interface to the JVM that we'll call the majority of our
-// methods on.
 use jni::JNIEnv;
+use jni::objects::{JObject, JValueGen};
+use jni::sys::jint;
 
-// These objects are what you should use as arguments to your native
-// function. They carry extra lifetime information to prevent them escaping
-// this context and getting used after being GC'd.
-use jni::objects::{JClass, JObject, JString};
-
-// This is just a pointer. We'll be returning it from our function. We
-// can't return one of the objects with lifetime information because the
-// lifetime checker won't let us.
-use jni::sys::{jint, jstring};
-
-// This keeps Rust from "mangling" the name and making it unique for this
-// crate.
-#[unsafe(no_mangle)]
-pub extern "system" fn Java_com_oxideWorldgen_gen_NoiseChunkGeneratorRust_hello<'local>(mut env: JNIEnv<'local>, _class: JClass<'local>, input: JString<'local>) -> jstring {
-    // First, we have to get the string out of Java. Check out the `strings`
-    // module for more info on how this works.
-    let input: String =
-        env.get_string(&input).expect("Couldn't get java string!").into();
-
-    // Then we have to create a new Java string to return. Again, more info
-    // in the `strings` module.
-    let output = env.new_string(format!("Hello {}, from Rust!", input))
-        .expect("Couldn't create java string!");
-
-    // Finally, extract the raw pointer to return.
-    output.into_raw()
-}
-
-#[unsafe(no_mangle)]
-pub extern "system" fn Java_com_oxideWorldgen_gen_NoiseChunkGeneratorRust_getWorldHeightRust(
-    mut env: JNIEnv,
-    this: JObject,
-) -> jint {
-    let settings_obj = env
-        .get_field(&this, "settings", "Lnet/minecraft/registry/entry/RegistryEntry;")
-        .expect("Failed to get 'settings' field")
-        .l()
-        .expect("Expected settings to be an object");
-
-    let settings_value = env
-        .call_method(&settings_obj, "value", "()Ljava/lang/Object;", &[])
-        .expect("Failed to call value()")
-        .l()
-        .unwrap();
-
-    let shape_config = env
-        .call_method(
-            &settings_value,
-            "generationShapeConfig",
-            "()Lnet/minecraft/world/gen/chunk/GenerationShapeConfig;",
-            &[],
-        )
-        .expect("Could not call generationShapeConfig()")
-        .l()
-        .expect("Expected GenerationShapeConfig");
-
-    // 4. Call height() → int
-    let height = env
-        .call_method(&shape_config, "height", "()I", &[])
-        .expect("Could not call height()")
-        .i()
-        .expect("Expected int from height()");
-
-    height
-}
-
-#[unsafe(no_mangle)]
-pub extern "system" fn Java_com_oxideWorldgen_gen_NoiseChunkGeneratorRust_getSeaLevelRust(
-    _env: JNIEnv,
-    _this: JObject,
-) -> jint {
-    50
-}
 
 #[unsafe(no_mangle)]
 pub extern "system" fn Java_com_oxideWorldgen_gen_NoiseChunkGeneratorRust_populateNoiseRust<'local>(
-    _env: JNIEnv<'local>,
+    mut env: JNIEnv<'local>,
     _this: JObject<'local>,
     chunk_noise_sampler_j: JObject<'local>,
     chunk_j: JObject<'local>,
     minimum_cell_y: jint,
     cell_height: jint
-) -> JObject<'local> {
-    let mut cns = ChunkNoiseSampler::from_java(chunk_noise_sampler_j);
-    let mut chunk = Chunk::from_java(chunk_j);
+) {
+    let chunk: Chunk<'_> = Chunk::from_java(chunk_j);
 
-    let i = chunk.pos.get_start_x();
-    let j = chunk.pos.get_start_z();
-    let aqs = &mut cns.aquifer_sampler;
+    let mutable: BlockPos<'_> = BlockPos::new(&mut env);//BlockPos { jobj: obj };
+    let block_state: BlockState<'_> = BlockState::default(&mut env);
 
-    cns.sample_start_density();
-    let mut mutable = BlockPos::new();
-    let k = cns.horizontal_cell_block_count;
-    let l = cns.vertical_cell_block_count;
-    let m = 16 / k;
-    let n = 16 / k;
-
-    for o in 0..m {
-        cns.sample_end_density(o);
-
-        for p in 0..n {
-            let q = chunk.count_vertical_sections() - 1;
-            let chunk_section = &mut chunk.sections[q as usize];
-
-            for r in (0..=(cell_height-1)).rev() {
-                cns.on_sampled_cell_corners(r, p);
-            }
+    for x in 0..16 {
+        for z in 0..16 {
+            mutable.set(&mut env, x, 0, z);
+            chunk.set_block_state(&mutable, &block_state, &mut env);
         }
     }
-    
-    todo!()
 }
 
-struct Chunk {
-    pos: ChunkPos,
-    sections: Vec<ChunkSection>
+struct Chunk<'a> {
+    jobj: JObject<'a>,
 }
 
-struct ChunkSection {
+impl Chunk<'_> {
+    fn from_java<'a>(chunk_j: JObject<'a>) -> Chunk<'a> {
+        Chunk { 
+            jobj: chunk_j,
+        }
+    }
 
-}
-
-impl Chunk {
-    fn from_java(chunk_j: JObject) -> Chunk {
-        todo!()
+    fn set_block_state(&self, pos: &BlockPos, state: &BlockState, env: &mut JNIEnv) {
+        let _ = env.call_method(
+            &self.jobj,
+             "setBlockState",
+             "(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;)Lnet/minecraft/block/BlockState;",
+             &[JValueGen::Object(&pos.jobj), JValueGen::Object(&state.jobj)]
+            )
+            .expect("update");
     }
 
     fn count_vertical_sections(&self) -> i32 {
         todo!()
     }
+
+    fn get_pos(&self) -> ChunkPos {
+        todo!()
+    }
+
+    fn get_section(&self, i: i32) -> ChunkSection {
+        todo!()
+    }
+}
+
+struct BlockPos<'a> {
+    jobj: JObject<'a>,
+}
+
+impl BlockPos<'_> {
+    fn new<'a>(env: &mut JNIEnv<'a>) -> BlockPos<'a> {
+        let class_path = "net/minecraft/util/math/BlockPos$Mutable";
+
+        let class = env.find_class(class_path).expect("1");
+
+        let ctor_sig = "()V";
+        let obj = env.new_object(class, ctor_sig, &[]).expect("msg");
+        assert!(env.is_instance_of(&obj, "net/minecraft/util/math/BlockPos$Mutable").unwrap());
+        BlockPos { 
+            jobj: obj,
+        }
+    }
+
+    fn set(&self, env: &mut JNIEnv,  x: i32, y: i32, z: i32) {
+        let _ = env.call_method(
+            &self.jobj,
+             "set",
+             "(III)Lnet/minecraft/util/math/BlockPos$Mutable;",
+             &[JValueGen::Int(x), JValueGen::Int(y), JValueGen::Int(z)]
+            )
+            .expect("update");
+    }
+}
+
+struct BlockState<'a> {
+    jobj: JObject<'a>,
+}
+
+impl BlockState<'_> {
+    fn default<'a>(env: &mut JNIEnv<'a>) -> BlockState<'a> {
+        let block_class = env.find_class("net/minecraft/block/Blocks").expect("block_class");
+
+        let stone_block = env.get_static_field(block_class, "STONE", "Lnet/minecraft/block/Block;").expect("msg").l().expect("msg");
+
+        let state = env.call_method(stone_block, "getDefaultState", "()Lnet/minecraft/block/BlockState;", &[]).expect("msg").l().expect("msg");
+        assert!(env.is_instance_of(&state, "net/minecraft/block/BlockState").unwrap());
+        BlockState { 
+            jobj: state,
+        }
+    }
+}
+
+struct ChunkSection {
+
 }
 
 struct ChunkPos {
@@ -152,18 +128,6 @@ impl ChunkPos {
 
     fn chunk_to_block_coord(c: i32) -> i32 {
         c << 4
-    }
-}
-
-struct BlockPos {
-    x: i32,
-    y: i32,
-    z: i32,
-}
-
-impl BlockPos {
-    fn new() -> BlockPos {
-        BlockPos { x: 0, y: 0, z: 0 }
     }
 }
 

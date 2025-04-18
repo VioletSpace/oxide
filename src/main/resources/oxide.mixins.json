@@ -6,7 +6,8 @@
 		"ChunkGeneratorsMixin",
 		"ChunkNoiseSamplerMixin",
 		"ExampleMixin",
-		"ServerChunkLoadingManagerMixin"
+		"ServerChunkLoadingManagerMixin",
+		"WorldPresetsMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

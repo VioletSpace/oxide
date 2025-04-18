@@ -75,9 +75,7 @@ public class NoiseChunkGeneratorRust extends ChunkGenerator {
     // This declares that the static `hello` method will be provided
     // a native library.
     private static native String hello(String input);
-    private native int getWorldHeightRust();
-    private native int getSeaLevelRust();
-    private native Chunk populateNoiseRust(ChunkNoiseSampler cns, Chunk chunk, int minimumCellY, int cellHeight);
+    private native void populateNoiseRust(ChunkNoiseSampler cns, Chunk chunk, int minimumCellY, int cellHeight);
 
     static {
         // Load the rust library for the correct operating system.
@@ -89,8 +87,6 @@ public class NoiseChunkGeneratorRust extends ChunkGenerator {
         Oxide.LOGGER.info("Creating NoiseChunkGeneratorRust with settings: {}", settings.getKey().toString());
         this.settings = settings;
         this.fluidLevelSampler = Suppliers.memoize(() -> createFluidLevelSampler(settings.value()));
-        String output = hello("oxide");
-        Oxide.LOGGER.info(output);
     }
 
     private static AquiferSampler.FluidLevelSampler createFluidLevelSampler(ChunkGeneratorSettings settings) {
@@ -313,17 +309,17 @@ public class NoiseChunkGeneratorRust extends ChunkGenerator {
                 chunkx -> this.createChunkNoiseSampler(chunkx, structureAccessor, blender, noiseConfig)
         );
         ChunkGeneratorSettings chunkGeneratorSettings = this.settings.value();
-        noiseConfig.getSurfaceBuilder()
-                .buildSurface(
-                        noiseConfig,
-                        biomeAccess,
-                        biomeRegistry,
-                        chunkGeneratorSettings.usesLegacyRandom(),
-                        heightContext,
-                        chunk,
-                        chunkNoiseSampler,
-                        chunkGeneratorSettings.surfaceRule()
-                );
+        //noiseConfig.getSurfaceBuilder()
+        //        .buildSurface(
+        //                noiseConfig,
+        //                biomeAccess,
+        //                biomeRegistry,
+        //                chunkGeneratorSettings.usesLegacyRandom(),
+        //                heightContext,
+        //                chunk,
+        //                chunkNoiseSampler,
+        //                chunkGeneratorSettings.surfaceRule()
+        //        );
     }
 
     @Override
@@ -382,7 +378,7 @@ public class NoiseChunkGeneratorRust extends ChunkGenerator {
 
             for (int n = l; n >= m; n--) {
                 ChunkSection chunkSection = chunk.getSection(n);
-                chunkSection.lock();
+                //chunkSection.lock();
                 set.add(chunkSection);
             }
 
@@ -391,7 +387,7 @@ public class NoiseChunkGeneratorRust extends ChunkGenerator {
                 populatedChunk = this.populateNoise(blender, structureAccessor, noiseConfig, chunk, j, k);
             } finally {
                 for (ChunkSection chunkSection3 : set) {
-                    chunkSection3.unlock();
+                    //chunkSection3.unlock();
                 }
             }
 
@@ -403,80 +399,81 @@ public class NoiseChunkGeneratorRust extends ChunkGenerator {
         ChunkNoiseSampler chunkNoiseSampler = chunk.getOrCreateChunkNoiseSampler(
                 chunkx -> this.createChunkNoiseSampler(chunkx, structureAccessor, blender, noiseConfig)
         );
-        Heightmap heightmap = chunk.getHeightmap(Heightmap.Type.OCEAN_FLOOR_WG);
-        Heightmap heightmap2 = chunk.getHeightmap(Heightmap.Type.WORLD_SURFACE_WG);
-        ChunkPos chunkPos = chunk.getPos();
-        int i = chunkPos.getStartX();
-        int j = chunkPos.getStartZ();
-        AquiferSampler aquiferSampler = chunkNoiseSampler.getAquiferSampler();
-        chunkNoiseSampler.sampleStartDensity();
-        BlockPos.Mutable mutable = new BlockPos.Mutable();
-        int k = ((ChunkNoiseSamplerMixin)(Object)chunkNoiseSampler)
-                .callGetHorizontalCellBlockCount();
-        int l = ((ChunkNoiseSamplerMixin)(Object)chunkNoiseSampler)
-                .callGetVerticalCellBlockCount();
-        int m = 16 / k;
-        int n = 16 / k;
-
-        for (int o = 0; o < m; o++) {
-            chunkNoiseSampler.sampleEndDensity(o);
-
-            for (int p = 0; p < n; p++) {
-                int q = chunk.countVerticalSections() - 1;
-                ChunkSection chunkSection = chunk.getSection(q);
-
-                for (int r = cellHeight - 1; r >= 0; r--) {
-                    chunkNoiseSampler.onSampledCellCorners(r, p);
-
-                    for (int s = l - 1; s >= 0; s--) {
-                        int t = (minimumCellY + r) * l + s;
-                        int u = t & 15;
-                        int v = chunk.getSectionIndex(t);
-                        if (q != v) {
-                            q = v;
-                            chunkSection = chunk.getSection(v);
-                        }
-
-                        double d = (double)s / l;
-                        chunkNoiseSampler.interpolateY(t, d);
-
-                        for (int w = 0; w < k; w++) {
-                            int x = i + o * k + w;
-                            int y = x & 15;
-                            double e = (double)w / k;
-                            chunkNoiseSampler.interpolateX(x, e);
-
-                            for (int z = 0; z < k; z++) {
-                                int aa = j + p * k + z;
-                                int ab = aa & 15;
-                                double f = (double)z / k;
-                                chunkNoiseSampler.interpolateZ(aa, f);
-                                BlockState blockState = ((ChunkNoiseSamplerMixin)(Object)chunkNoiseSampler)
-                                        .callSampleBlockState();
-                                if (blockState == null) {
-                                    blockState = this.settings.value().defaultBlock();
-                                }
-
-                                blockState = this.getBlockState(chunkNoiseSampler, x, t, aa, blockState);
-                                if (blockState != AIR && !SharedConstants.isOutsideGenerationArea(chunk.getPos())) {
-                                    chunkSection.setBlockState(y, u, ab, blockState, false);
-                                    heightmap.trackUpdate(y, t, ab, blockState);
-                                    heightmap2.trackUpdate(y, t, ab, blockState);
-                                    if (aquiferSampler.needsFluidTick() && !blockState.getFluidState().isEmpty()) {
-                                        mutable.set(x, t, aa);
-                                        chunk.markBlockForPostProcessing(mutable);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            chunkNoiseSampler.swapBuffers();
-        }
-
-        chunkNoiseSampler.stopInterpolation();
+        populateNoiseRust(chunkNoiseSampler, chunk, minimumCellY, cellHeight);
+        //Heightmap heightmap = chunk.getHeightmap(Heightmap.Type.OCEAN_FLOOR_WG);
+        //Heightmap heightmap2 = chunk.getHeightmap(Heightmap.Type.WORLD_SURFACE_WG);
+        //ChunkPos chunkPos = chunk.getPos();
+        //int i = chunkPos.getStartX();
+        //int j = chunkPos.getStartZ();
+        //AquiferSampler aquiferSampler = chunkNoiseSampler.getAquiferSampler();
+        //chunkNoiseSampler.sampleStartDensity();
+        //BlockPos.Mutable mutable = new BlockPos.Mutable();
+        //int k = ((ChunkNoiseSamplerMixin)(Object)chunkNoiseSampler)
+        //        .callGetHorizontalCellBlockCount();
+        //int l = ((ChunkNoiseSamplerMixin)(Object)chunkNoiseSampler)
+        //        .callGetVerticalCellBlockCount();
+        //int m = 16 / k;
+        //int n = 16 / k;
+//
+        //for (int o = 0; o < m; o++) {
+        //    chunkNoiseSampler.sampleEndDensity(o);
+//
+        //    for (int p = 0; p < n; p++) {
+        //        int q = chunk.countVerticalSections() - 1;
+        //        ChunkSection chunkSection = chunk.getSection(q);
+//
+        //        for (int r = cellHeight - 1; r >= 0; r--) {
+        //            chunkNoiseSampler.onSampledCellCorners(r, p);
+//
+        //            for (int s = l - 1; s >= 0; s--) {
+        //                int t = (minimumCellY + r) * l + s;
+        //                int u = t & 15;
+        //                int v = chunk.getSectionIndex(t);
+        //                if (q != v) {
+        //                    q = v;
+        //                    chunkSection = chunk.getSection(v);
+        //                }
+//
+        //                double d = (double)s / l;
+        //                chunkNoiseSampler.interpolateY(t, d);
+//
+        //                for (int w = 0; w < k; w++) {
+        //                    int x = i + o * k + w;
+        //                    int y = x & 15;
+        //                    double e = (double)w / k;
+        //                    chunkNoiseSampler.interpolateX(x, e);
+//
+        //                    for (int z = 0; z < k; z++) {
+        //                        int aa = j + p * k + z;
+        //                        int ab = aa & 15;
+        //                        double f = (double)z / k;
+        //                        chunkNoiseSampler.interpolateZ(aa, f);
+        //                        BlockState blockState = ((ChunkNoiseSamplerMixin)(Object)chunkNoiseSampler)
+        //                                .callSampleBlockState();
+        //                        if (blockState == null) {
+        //                            blockState = this.settings.value().defaultBlock();
+        //                        }
+//
+        //                        blockState = this.getBlockState(chunkNoiseSampler, x, t, aa, blockState);
+        //                        if (blockState != AIR && !SharedConstants.isOutsideGenerationArea(chunk.getPos())) {
+        //                            //chunkSection.setBlockState(y, u, ab, blockState, false);
+        //                            //heightmap.trackUpdate(y, t, ab, blockState);
+        //                            //heightmap2.trackUpdate(y, t, ab, blockState);
+        //                            if (aquiferSampler.needsFluidTick() && !blockState.getFluidState().isEmpty()) {
+        //                                mutable.set(x, t, aa);
+        //                                chunk.markBlockForPostProcessing(mutable);
+        //                            }
+        //                        }
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+//
+        //    chunkNoiseSampler.swapBuffers();
+        //}
+//
+        //chunkNoiseSampler.stopInterpolation();
         return chunk;
     }
 
@@ -486,14 +483,12 @@ public class NoiseChunkGeneratorRust extends ChunkGenerator {
 
     @Override
     public int getWorldHeight() {
-        //return this.settings.value().generationShapeConfig().height();
-        return getWorldHeightRust();
+        return this.settings.value().generationShapeConfig().height();
     }
 
     @Override
     public int getSeaLevel() {
-        //return this.settings.value().seaLevel(); TODO:
-        return getSeaLevelRust();
+        return this.settings.value().seaLevel();
     }
 
     @Override

@@ -90,7 +90,7 @@ publishing {
 }
 
 tasks.register('buildRust', Exec) {
-	println("Building native library...")
+	println("Building rust native library...")
 	workingDir "$projectDir/src/rust-src"
 	commandLine 'cargo', 'build', '--release'
 }
@@ -120,7 +120,9 @@ tasks.register('copyRustLib', Copy) {
 		into("$projectDir/src/main/resources/native/linux")
 	}
 
-	println("Copied rust native library")
+	doLast {
+		println("Copied rust native library")
+	}
 }
 
 tasks.named('compileJava') {
