@@ -5,7 +5,7 @@
 	"mixins": [
 		"ChunkGeneratorsMixin",
 		"ChunkNoiseSamplerMixin",
-		"ExampleMixin",
+		"DimensionOptionsRegistryHolderMixin",
 		"ServerChunkLoadingManagerMixin",
 		"WorldPresetsMixin"
 	],

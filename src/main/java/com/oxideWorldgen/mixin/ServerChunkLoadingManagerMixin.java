@@ -28,6 +28,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
+/*
+* This Mixin makes sure that the overwritten NoiseChunkGenerator->NoiseChunkGeneratorRust has the correct NoiseConfig
+* */
 @Mixin(ServerChunkLoadingManager.class)
 public class ServerChunkLoadingManagerMixin {
     @Shadow @Final @Mutable

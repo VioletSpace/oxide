@@ -68,13 +68,11 @@ public class NoiseChunkGeneratorRust extends ChunkGenerator {
                     )
                     .apply(instance, instance.stable(NoiseChunkGeneratorRust::new))
     );
-    private static final BlockState AIR = Blocks.AIR.getDefaultState();
     private final RegistryEntry<ChunkGeneratorSettings> settings;
     private final Supplier<AquiferSampler.FluidLevelSampler> fluidLevelSampler;
 
     // This declares that the static `hello` method will be provided
     // a native library.
-    private static native String hello(String input);
     private native void populateNoiseRust(ChunkNoiseSampler cns, Chunk chunk, int minimumCellY, int cellHeight);
 
     static {
@@ -371,28 +369,10 @@ public class NoiseChunkGeneratorRust extends ChunkGenerator {
         int i = generationShapeConfig.minimumY();
         int j = MathHelper.floorDiv(i, generationShapeConfig.verticalCellBlockCount());
         int k = MathHelper.floorDiv(generationShapeConfig.height(), generationShapeConfig.verticalCellBlockCount());
-        return k <= 0 ? CompletableFuture.completedFuture(chunk) : CompletableFuture.supplyAsync(() -> {
-            int l = chunk.getSectionIndex(k * generationShapeConfig.verticalCellBlockCount() - 1 + i);
-            int m = chunk.getSectionIndex(i);
-            Set<ChunkSection> set = Sets.<ChunkSection>newHashSet();
-
-            for (int n = l; n >= m; n--) {
-                ChunkSection chunkSection = chunk.getSection(n);
-                //chunkSection.lock();
-                set.add(chunkSection);
-            }
-
-            Chunk populatedChunk;
-            try {
-                populatedChunk = this.populateNoise(blender, structureAccessor, noiseConfig, chunk, j, k);
-            } finally {
-                for (ChunkSection chunkSection3 : set) {
-                    //chunkSection3.unlock();
-                }
-            }
-
-            return populatedChunk;
-        }, Util.getMainWorkerExecutor().named("wgen_fill_noise"));
+        return k <= 0 ? CompletableFuture.completedFuture(chunk) : CompletableFuture.supplyAsync(() ->
+                this.populateNoise(blender, structureAccessor, noiseConfig, chunk, j, k),
+                Util.getMainWorkerExecutor().named("wgen_fill_noise")
+        );
     }
 
     private Chunk populateNoise(Blender blender, StructureAccessor structureAccessor, NoiseConfig noiseConfig, Chunk chunk, int minimumCellY, int cellHeight) {
@@ -400,80 +380,6 @@ public class NoiseChunkGeneratorRust extends ChunkGenerator {
                 chunkx -> this.createChunkNoiseSampler(chunkx, structureAccessor, blender, noiseConfig)
         );
         populateNoiseRust(chunkNoiseSampler, chunk, minimumCellY, cellHeight);
-        //Heightmap heightmap = chunk.getHeightmap(Heightmap.Type.OCEAN_FLOOR_WG);
-        //Heightmap heightmap2 = chunk.getHeightmap(Heightmap.Type.WORLD_SURFACE_WG);
-        //ChunkPos chunkPos = chunk.getPos();
-        //int i = chunkPos.getStartX();
-        //int j = chunkPos.getStartZ();
-        //AquiferSampler aquiferSampler = chunkNoiseSampler.getAquiferSampler();
-        //chunkNoiseSampler.sampleStartDensity();
-        //BlockPos.Mutable mutable = new BlockPos.Mutable();
-        //int k = ((ChunkNoiseSamplerMixin)(Object)chunkNoiseSampler)
-        //        .callGetHorizontalCellBlockCount();
-        //int l = ((ChunkNoiseSamplerMixin)(Object)chunkNoiseSampler)
-        //        .callGetVerticalCellBlockCount();
-        //int m = 16 / k;
-        //int n = 16 / k;
-//
-        //for (int o = 0; o < m; o++) {
-        //    chunkNoiseSampler.sampleEndDensity(o);
-//
-        //    for (int p = 0; p < n; p++) {
-        //        int q = chunk.countVerticalSections() - 1;
-        //        ChunkSection chunkSection = chunk.getSection(q);
-//
-        //        for (int r = cellHeight - 1; r >= 0; r--) {
-        //            chunkNoiseSampler.onSampledCellCorners(r, p);
-//
-        //            for (int s = l - 1; s >= 0; s--) {
-        //                int t = (minimumCellY + r) * l + s;
-        //                int u = t & 15;
-        //                int v = chunk.getSectionIndex(t);
-        //                if (q != v) {
-        //                    q = v;
-        //                    chunkSection = chunk.getSection(v);
-        //                }
-//
-        //                double d = (double)s / l;
-        //                chunkNoiseSampler.interpolateY(t, d);
-//
-        //                for (int w = 0; w < k; w++) {
-        //                    int x = i + o * k + w;
-        //                    int y = x & 15;
-        //                    double e = (double)w / k;
-        //                    chunkNoiseSampler.interpolateX(x, e);
-//
-        //                    for (int z = 0; z < k; z++) {
-        //                        int aa = j + p * k + z;
-        //                        int ab = aa & 15;
-        //                        double f = (double)z / k;
-        //                        chunkNoiseSampler.interpolateZ(aa, f);
-        //                        BlockState blockState = ((ChunkNoiseSamplerMixin)(Object)chunkNoiseSampler)
-        //                                .callSampleBlockState();
-        //                        if (blockState == null) {
-        //                            blockState = this.settings.value().defaultBlock();
-        //                        }
-//
-        //                        blockState = this.getBlockState(chunkNoiseSampler, x, t, aa, blockState);
-        //                        if (blockState != AIR && !SharedConstants.isOutsideGenerationArea(chunk.getPos())) {
-        //                            //chunkSection.setBlockState(y, u, ab, blockState, false);
-        //                            //heightmap.trackUpdate(y, t, ab, blockState);
-        //                            //heightmap2.trackUpdate(y, t, ab, blockState);
-        //                            if (aquiferSampler.needsFluidTick() && !blockState.getFluidState().isEmpty()) {
-        //                                mutable.set(x, t, aa);
-        //                                chunk.markBlockForPostProcessing(mutable);
-        //                            }
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //        }
-        //    }
-//
-        //    chunkNoiseSampler.swapBuffers();
-        //}
-//
-        //chunkNoiseSampler.stopInterpolation();
         return chunk;
     }
 

@@ -22,6 +22,9 @@ import static net.minecraft.world.gen.WorldPresets.DEBUG_ALL_BLOCK_STATES;
 import static net.minecraft.world.gen.WorldPresets.FLAT;
 import static net.minecraft.world.gen.WorldPresets.DEFAULT;
 
+/*
+* Replaces NoiseChunkGenerator in WorldPresets with NoiseChunkGeneratorRust. This might not be necessary as it does not seem to fire.
+* */
 @Mixin(WorldPresets.class)
 public class WorldPresetsMixin {
     @Inject(

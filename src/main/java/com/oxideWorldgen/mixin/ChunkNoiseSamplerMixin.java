@@ -9,6 +9,9 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 import java.util.List;
 
+/*
+* This mixin allows access to MultiNoiseUtil.MultiNoiseSampler
+* */
 @Mixin(ChunkNoiseSampler.class)
 public interface ChunkNoiseSamplerMixin {
     @Invoker("createMultiNoiseSampler")
