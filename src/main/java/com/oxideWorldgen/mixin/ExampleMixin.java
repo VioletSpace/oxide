@@ -1,4 +1,4 @@
-package com.oxide_worldgen.mixin;
+package com.oxideWorldgen.mixin;
 
 import net.minecraft.server.MinecraftServer;
 import org.spongepowered.asm.mixin.Mixin;

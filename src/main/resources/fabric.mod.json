@@ -16,10 +16,10 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.oxide_worldgen.Oxide"
+			"com.oxideWorldgen.Oxide"
 		],
 		"client": [
-			"com.oxide_worldgen.OxideClient"
+			"com.oxideWorldgen.OxideClient"
 		]
 	},
 	"mixins": [

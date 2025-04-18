@@ -1,4 +1,4 @@
-package com.oxide_worldgen;
+package com.oxideWorldgen;
 
 import net.fabricmc.api.ClientModInitializer;
 

@@ -88,3 +88,45 @@ publishing {
 		// retrieving dependencies.
 	}
 }
+
+tasks.register('buildRust', Exec) {
+	println("Building native library...")
+	workingDir "$projectDir/src/rust-src"
+	commandLine 'cargo', 'build', '--release'
+}
+
+tasks.register('copyRustLib', Copy) {
+	dependsOn tasks.named('buildRust')
+	def os = System.getProperty("os.name").toLowerCase()
+	def libName = {
+		if (os.contains("win")) {
+			return "oxide_worldgen.dll"
+		} else if (os.contains("mac")) {
+			return "liboxide_worldgen.dylib"
+		} else {
+			return "liboxide_worldgen.so"
+		}
+	}.call()
+
+
+	if (os.contains("win")) {
+		from("$projectDir/src/rust-src/target/release/$libName")
+		into("$projectDir/src/main/resources/native/windows")
+	} else if (os.contains("mac")) {
+		from("$projectDir/src/rust-src/target/release/$libName")
+		into("$projectDir/src/main/resources/native/mac")
+	} else {
+		from("$projectDir/src/rust-src/target/release/$libName")
+		into("$projectDir/src/main/resources/native/linux")
+	}
+
+	println("Copied rust native library")
+}
+
+tasks.named('compileJava') {
+	dependsOn tasks.named('copyRustLib')
+}
+
+tasks.named('processResources') {
+	dependsOn tasks.named('copyRustLib')
+}

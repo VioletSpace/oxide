@@ -1,4 +1,4 @@
-package com.oxide_worldgen.mixin;
+package com.oxideWorldgen.mixin;
 
 import net.minecraft.block.BlockState;
 import net.minecraft.world.biome.source.util.MultiNoiseUtil;

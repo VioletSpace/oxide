@@ -1,11 +1,13 @@
-package com.oxide_worldgen.gen;
+package com.oxideWorldgen.gen;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Sets;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.oxide_worldgen.mixin.ChunkNoiseSamplerMixin;
+import com.oxideWorldgen.NativeLibLoader;
+import com.oxideWorldgen.Oxide;
+import com.oxideWorldgen.mixin.ChunkNoiseSamplerMixin;
 import net.minecraft.SharedConstants;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -70,10 +72,25 @@ public class NoiseChunkGeneratorRust extends ChunkGenerator {
     private final RegistryEntry<ChunkGeneratorSettings> settings;
     private final Supplier<AquiferSampler.FluidLevelSampler> fluidLevelSampler;
 
+    // This declares that the static `hello` method will be provided
+    // a native library.
+    private static native String hello(String input);
+    private native int getWorldHeightRust();
+    private native int getSeaLevelRust();
+    private native Chunk populateNoiseRust(ChunkNoiseSampler cns, Chunk chunk, int minimumCellY, int cellHeight);
+
+    static {
+        // Load the rust library for the correct operating system.
+        NativeLibLoader.loadNative("oxide_worldgen");
+    }
+
     public NoiseChunkGeneratorRust(BiomeSource biomeSource, RegistryEntry<ChunkGeneratorSettings> settings) {
         super(biomeSource);
+        Oxide.LOGGER.info("Creating NoiseChunkGeneratorRust with settings: {}", settings.getKey().toString());
         this.settings = settings;
         this.fluidLevelSampler = Suppliers.memoize(() -> createFluidLevelSampler(settings.value()));
+        String output = hello("oxide");
+        Oxide.LOGGER.info(output);
     }
 
     private static AquiferSampler.FluidLevelSampler createFluidLevelSampler(ChunkGeneratorSettings settings) {
@@ -369,16 +386,16 @@ public class NoiseChunkGeneratorRust extends ChunkGenerator {
                 set.add(chunkSection);
             }
 
-            Chunk var20;
+            Chunk populatedChunk;
             try {
-                var20 = this.populateNoise(blender, structureAccessor, noiseConfig, chunk, j, k);
+                populatedChunk = this.populateNoise(blender, structureAccessor, noiseConfig, chunk, j, k);
             } finally {
                 for (ChunkSection chunkSection3 : set) {
                     chunkSection3.unlock();
                 }
             }
 
-            return var20;
+            return populatedChunk;
         }, Util.getMainWorkerExecutor().named("wgen_fill_noise"));
     }
 
@@ -469,12 +486,14 @@ public class NoiseChunkGeneratorRust extends ChunkGenerator {
 
     @Override
     public int getWorldHeight() {
-        return this.settings.value().generationShapeConfig().height();
+        //return this.settings.value().generationShapeConfig().height();
+        return getWorldHeightRust();
     }
 
     @Override
     public int getSeaLevel() {
-        return this.settings.value().seaLevel();
+        //return this.settings.value().seaLevel(); TODO:
+        return getSeaLevelRust();
     }
 
     @Override

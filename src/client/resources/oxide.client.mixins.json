@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "com.oxide_worldgen.mixin.client",
+	"package": "com.oxideWorldgen.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
 		"ExampleClientMixin"

@@ -1,8 +1,8 @@
-package com.oxide_worldgen.mixin;
+package com.oxideWorldgen.mixin;
 
 import com.mojang.datafixers.DataFixer;
-import com.oxide_worldgen.Oxide;
-import com.oxide_worldgen.gen.NoiseChunkGeneratorRust;
+import com.oxideWorldgen.Oxide;
+import com.oxideWorldgen.gen.NoiseChunkGeneratorRust;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.WorldGenerationProgressListener;

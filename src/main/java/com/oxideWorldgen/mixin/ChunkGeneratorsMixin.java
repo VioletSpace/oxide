@@ -1,8 +1,8 @@
-package com.oxide_worldgen.mixin;
+package com.oxideWorldgen.mixin;
 
 import com.mojang.serialization.MapCodec;
-import com.oxide_worldgen.Oxide;
-import com.oxide_worldgen.gen.NoiseChunkGeneratorRust;
+import com.oxideWorldgen.Oxide;
+import com.oxideWorldgen.gen.NoiseChunkGeneratorRust;
 import net.minecraft.registry.Registry;
 import net.minecraft.world.gen.chunk.*;
 import org.spongepowered.asm.mixin.*;
