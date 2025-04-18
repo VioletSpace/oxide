@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "com.oxide_worldgen.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"ChunkGeneratorsMixin",
+		"ChunkNoiseSamplerMixin",
+		"ExampleMixin",
+		"ServerChunkLoadingManagerMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

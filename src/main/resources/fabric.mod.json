@@ -1,36 +1,36 @@
 {
 	"schemaVersion": 1,
-	"id": "modid",
+	"id": "oxide",
 	"version": "${version}",
-	"name": "Example mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "Oxide",
+	"description": "Minecraft world generation reimplemented and optimized in Rust.",
 	"authors": [
-		"Me!"
+		"VioletSpace"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/VioletSpace/oxide",
+		"sources": "https://github.com/VioletSpace/oxide"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/modid/icon.png",
+	"icon": "assets/oxide/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.example.ExampleMod"
+			"com.oxide_worldgen.Oxide"
 		],
 		"client": [
-			"com.example.ExampleModClient"
+			"com.oxide_worldgen.OxideClient"
 		]
 	},
 	"mixins": [
-		"modid.mixins.json",
+		"oxide.mixins.json",
 		{
-			"config": "modid.client.mixins.json",
+			"config": "oxide.client.mixins.json",
 			"environment": "client"
 		}
 	],
 	"depends": {
-		"fabricloader": ">=0.16.10",
+		"fabricloader": ">=0.16.13",
 		"minecraft": "~1.21.5",
 		"java": ">=21",
 		"fabric-api": "*"
