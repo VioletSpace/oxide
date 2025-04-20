@@ -21,6 +21,10 @@ jobs:
           distribution: 'microsoft'
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
+      - name: setup rust linux toolchain
+        run: rustup target add x86_64-unknown-linux-gnu
+      - name: setup rust windows toolchain
+        run: rustup target add x86_64-pc-windows-gnu
       - name: build
         run: ./gradlew build
       - name: capture build artifacts
