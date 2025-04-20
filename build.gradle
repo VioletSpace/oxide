@@ -89,39 +89,34 @@ publishing {
 	}
 }
 
-tasks.register('buildRust', Exec) {
-	println("Building rust native library...")
-	workingDir "$projectDir/src/rust-src"
-	commandLine 'cargo', 'build', '--release'
+tasks.register('buildRust') {
+	doLast {
+		exec {
+			println("Building rust native windows library...")
+			workingDir "$projectDir/src/rust-src"
+			commandLine 'cargo', 'build', '--release', '--target=x86_64-pc-windows-gnu'
+		}
+		exec {
+			println("Building rust native linux library...")
+			workingDir "$projectDir/src/rust-src"
+			commandLine 'cargo', 'build', '--release', '--target=x86_64-unknown-linux-gnu'
+		}
+	}
 }
 
-tasks.register('copyRustLib', Copy) {
+tasks.register('copyRustLib') {
 	dependsOn tasks.named('buildRust')
-	def os = System.getProperty("os.name").toLowerCase()
-	def libName = {
-		if (os.contains("win")) {
-			return "oxide_worldgen.dll"
-		} else if (os.contains("mac")) {
-			return "liboxide_worldgen.dylib"
-		} else {
-			return "liboxide_worldgen.so"
-		}
-	}.call()
-
-
-	if (os.contains("win")) {
-		from("$projectDir/src/rust-src/target/release/$libName")
-		into("$projectDir/src/main/resources/native/windows")
-	} else if (os.contains("mac")) {
-		from("$projectDir/src/rust-src/target/release/$libName")
-		into("$projectDir/src/main/resources/native/mac")
-	} else {
-		from("$projectDir/src/rust-src/target/release/$libName")
-		into("$projectDir/src/main/resources/native/linux")
-	}
-
 	doLast {
-		println("Copied rust native library")
+		copy {
+			// Windows
+			from("$projectDir/src/rust-src/target/x86_64-pc-windows-gnu/release/oxide_worldgen.dll")
+			into("$projectDir/src/main/resources/native/windows")
+		}
+		copy {
+			// Linux
+			from("$projectDir/src/rust-src/target/x86_64-unknown-linux-gnu/release/liboxide_worldgen.so")
+			into("$projectDir/src/main/resources/native/linux")
+		}
 	}
 }
 
